@@ -250,7 +250,16 @@ const App: React.FC = () => {
               setAttendanceState={setAttendance}
             />
           )}
-          {view === 'students' && <StudentList students={filteredStudents} onSelectStudent={handleSelectStudent} />}
+          {view === 'students' && (
+            <StudentList
+              students={filteredStudents}
+              onSelectStudent={handleSelectStudent}
+              onStudentAdded={(newStudent) => {
+                setStudents(prev => [...prev, newStudent]);
+                setAttendance(prev => ({ ...prev, [newStudent.id]: null }));
+              }}
+            />
+          )}
           {view === 'profile' && activeStudent && (
             <StudentProfile
               student={activeStudent}

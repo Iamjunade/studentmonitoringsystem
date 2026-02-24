@@ -35,6 +35,32 @@ async function startServer() {
     }
   });
 
+  // API Route to add a new student
+  app.post("/api/add-student", async (req, res) => {
+    const { name, rollNumber, email, parentName, parentPhone, studentPhone, grade, section } = req.body;
+    if (!name || !rollNumber || !email || !parentName || !parentPhone || !studentPhone || !grade || !section) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+    try {
+      const newStudent = await prisma.student.create({
+        data: {
+          name, rollNumber, email, parentName, parentPhone, studentPhone, grade, section,
+          avatar: `https://i.pravatar.cc/150?u=${rollNumber}`,
+          attendancePercentage: 0,
+          gpa: 0,
+        },
+        include: { academicDetails: true },
+      });
+      res.status(201).json({ success: true, student: newStudent });
+    } catch (error: any) {
+      console.error("[POST /api/add-student] Error:", error);
+      if (error?.code === 'P2002') {
+        return res.status(409).json({ error: "A student with that roll number or email already exists." });
+      }
+      res.status(500).json({ error: "Internal server error creating student" });
+    }
+  });
+
   // API Route to register attendance
   app.post("/api/attendance", async (req, res) => {
     const { studentId, status } = req.body;
