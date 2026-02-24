@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSQL } from '../lib/prisma';
+import { neon } from '@neondatabase/serverless';
 
 export default async function handler(
     req: VercelRequest,
@@ -16,7 +16,7 @@ export default async function handler(
     }
 
     try {
-        const sql = getSQL();
+        const sql = neon(process.env.DATABASE_URL!);
 
         const students = await sql`SELECT * FROM "Student" WHERE id = ${studentId}`;
         const student = students[0];

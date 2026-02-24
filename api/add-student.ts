@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSQL } from '../lib/prisma';
+import { neon } from '@neondatabase/serverless';
 
 export default async function handler(
     req: VercelRequest,
@@ -16,7 +16,7 @@ export default async function handler(
     }
 
     try {
-        const sql = getSQL();
+        const sql = neon(process.env.DATABASE_URL!);
         const avatar = `https://i.pravatar.cc/150?u=${rollNumber}`;
 
         const result = await sql`

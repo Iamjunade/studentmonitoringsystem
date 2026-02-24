@@ -1,18 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSQL } from '../lib/prisma';
+import { neon } from '@neondatabase/serverless';
 
 export default async function handler(
-    req: VercelRequest,
-    res: VercelResponse
+  req: VercelRequest,
+  res: VercelResponse
 ) {
-    if (req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
-    try {
-        const sql = getSQL();
+  try {
+    const sql = neon(process.env.DATABASE_URL!);
 
-        const students = await sql`
+    const students = await sql`
       SELECT s.*,
         COALESCE(
           json_agg(
@@ -26,9 +26,9 @@ export default async function handler(
       ORDER BY s."createdAt" DESC
     `;
 
-        res.status(200).json(students);
-    } catch (error) {
-        console.error("[GET /api/students] Error:", error);
-        res.status(500).json({ error: "Internal server error", details: String(error) });
-    }
+    res.status(200).json(students);
+  } catch (error) {
+    console.error("[GET /api/students] Error:", error);
+    res.status(500).json({ error: "Internal server error", details: String(error) });
+  }
 }
