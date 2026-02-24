@@ -1,12 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
+import getPrismaClient from '../lib/prisma';
 
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma = getPrismaClient();
 
 export default async function handler(
     req: VercelRequest,
@@ -35,7 +30,6 @@ export default async function handler(
         const TEXTBEE_DEVICE_ID = process.env.TEXTBEE_DEVICE_ID;
 
         if (!SMS_GATEWAY_KEY || !TEXTBEE_DEVICE_ID) {
-            console.warn("[VERCEL SMS] Missing SMS_GATEWAY_KEY or TEXTBEE_DEVICE_ID environment variables.");
             return res.status(500).json({ error: "SMS Gateway is not fully configured" });
         }
 
@@ -56,13 +50,12 @@ export default async function handler(
         const result = await response.json();
 
         if (!response.ok) {
-            console.error("[VERCEL SMS] TextBee API Error:", result);
             return res.status(502).json({ error: "Upstream SMS Provider Failed", details: result });
         }
 
         res.status(200).json({ success: true, result });
     } catch (error) {
         console.error("[POST /api/request-details] Error:", error);
-        res.status(500).json({ error: "Internal server error sending request" });
+        res.status(500).json({ error: "Internal server error sending request", details: String(error) });
     }
 }

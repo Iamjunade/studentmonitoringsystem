@@ -1,12 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
+import getPrismaClient from '../lib/prisma';
 
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma = getPrismaClient();
 
 export default async function handler(
     req: VercelRequest,
@@ -48,6 +43,6 @@ export default async function handler(
         if (error?.code === 'P2002') {
             return res.status(409).json({ error: "A student with that roll number or email already exists." });
         }
-        res.status(500).json({ error: "Internal server error creating student" });
+        res.status(500).json({ error: "Internal server error creating student", details: String(error) });
     }
 }

@@ -1,12 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
+import getPrismaClient from '../lib/prisma';
 
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma = getPrismaClient();
 
 export default async function handler(
     req: VercelRequest,
@@ -26,13 +21,13 @@ export default async function handler(
         const attendanceRecord = await prisma.attendance.create({
             data: {
                 studentId,
-                status, // 'present', 'absent', 'late'
+                status,
             },
         });
 
         res.status(200).json({ success: true, record: attendanceRecord });
     } catch (error) {
         console.error("[POST /api/attendance] Error:", error);
-        res.status(500).json({ error: "Internal server error saving attendance" });
+        res.status(500).json({ error: "Internal server error saving attendance", details: String(error) });
     }
 }
