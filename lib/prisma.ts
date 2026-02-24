@@ -1,10 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
 import { neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
 
-// Required for Node.js environments (Vercel serverless)
-neonConfig.webSocketConstructor = ws;
+// Use native WebSocket if available (Node 18+, Vercel runtime), otherwise skip
+if (typeof WebSocket !== 'undefined') {
+    neonConfig.webSocketConstructor = WebSocket;
+}
 
 const connectionString = process.env.DATABASE_URL;
 
