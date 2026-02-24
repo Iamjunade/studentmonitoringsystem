@@ -25,15 +25,28 @@ async function startServer() {
     }
 
     try {
-      const url = new URL(ANDROID_SMS_GATEWAY_URL);
-      url.searchParams.append("key", SMS_GATEWAY_KEY);
-      url.searchParams.append("phone", phone);
-      url.searchParams.append("message", message);
+      const SMS_GATEWAY_KEY = process.env.SMS_GATEWAY_KEY;
+      const TEXTBEE_DEVICE_ID = process.env.TEXTBEE_DEVICE_ID;
 
-      console.log(`[SERVER SMS] Sending to ${phone}...`);
+      if (!SMS_GATEWAY_KEY || !TEXTBEE_DEVICE_ID) {
+        console.warn("[SERVER SMS] Missing SMS_GATEWAY_KEY or TEXTBEE_DEVICE_ID environment variables.");
+        return res.status(500).json({ error: "SMS Gateway is not fully configured" });
+      }
 
-      const response = await fetch(url.toString(), {
-        method: 'GET'
+      const TEXTBEE_API_URL = `https://api.textbee.dev/api/v1/gateway/devices/${TEXTBEE_DEVICE_ID}/send-sms`;
+
+      console.log(`[SERVER SMS] Sending to ${phone} via TextBee...`);
+
+      const response = await fetch(TEXTBEE_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': SMS_GATEWAY_KEY,
+        },
+        body: JSON.stringify({
+          recipients: [phone],
+          message: message,
+        }),
       });
 
       // Since we are on the server, we can check the response status
@@ -42,7 +55,7 @@ async function startServer() {
       } else {
         const errorText = await response.text();
         console.error("[SERVER SMS ERROR]", errorText);
-        res.status(500).json({ error: "Failed to send SMS via gateway", details: errorText });
+        res.status(500).json({ error: "Failed to send SMS via TextBee", details: errorText });
       }
     } catch (error) {
       console.error("[SERVER SMS EXCEPTION]", error);

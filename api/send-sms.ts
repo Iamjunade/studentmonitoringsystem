@@ -15,18 +15,28 @@ export default async function handler(
   }
 
   try {
-    const SMS_GATEWAY_KEY = process.env.SMS_GATEWAY_KEY || "uk_gHRx8BKeVjiEYRA1EUh3_bQXZbre-5De8F1XBu1pzsbVxmWX9xh7MFzUUymBIDVM";
-    const ANDROID_SMS_GATEWAY_URL = "https://api.sms-gateway.app/v1/message/send";
+    const SMS_GATEWAY_KEY = process.env.SMS_GATEWAY_KEY;
+    const TEXTBEE_DEVICE_ID = process.env.TEXTBEE_DEVICE_ID;
 
-    const url = new URL(ANDROID_SMS_GATEWAY_URL);
-    url.searchParams.append("key", SMS_GATEWAY_KEY);
-    url.searchParams.append("phone", phone);
-    url.searchParams.append("message", message);
+    if (!SMS_GATEWAY_KEY || !TEXTBEE_DEVICE_ID) {
+      console.warn("[VERCEL SMS] Missing SMS_GATEWAY_KEY or TEXTBEE_DEVICE_ID environment variables.");
+      return res.status(500).json({ error: "SMS Gateway is not fully configured" });
+    }
 
-    console.log(`[VERCEL SMS] Sending to ${phone}...`);
+    const TEXTBEE_API_URL = `https://api.textbee.dev/api/v1/gateway/devices/${TEXTBEE_DEVICE_ID}/send-sms`;
 
-    const response = await fetch(url.toString(), {
-      method: 'GET'
+    console.log(`[VERCEL SMS] Sending to ${phone} via TextBee...`);
+
+    const response = await fetch(TEXTBEE_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': SMS_GATEWAY_KEY,
+      },
+      body: JSON.stringify({
+        recipients: [phone],
+        message: message,
+      }),
     });
 
     if (response.ok) {
@@ -34,7 +44,7 @@ export default async function handler(
     } else {
       const errorText = await response.text();
       console.error("[VERCEL SMS ERROR]", errorText);
-      res.status(500).json({ error: "Failed to send SMS via gateway", details: errorText });
+      res.status(500).json({ error: "Failed to send SMS via TextBee", details: errorText });
     }
   } catch (error) {
     console.error("[VERCEL SMS EXCEPTION]", error);
