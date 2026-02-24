@@ -21,14 +21,26 @@ const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ students, onNotif
   const markAttendance = async (studentId: string, status: 'present' | 'absent' | 'late') => {
     if (attendanceState[studentId] === status) return;
 
+    // Optimistic UI Update
     setAttendanceState(prev => ({ ...prev, [studentId]: status }));
+
+    // Persist to NeonDB Database
+    try {
+      await fetch('/api/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, status }),
+      });
+    } catch (dbError) {
+      console.error('Failed to save attendance record to DB', dbError);
+    }
 
     if (status === 'absent') {
       const student = students.find(s => s.id === studentId);
       if (!student) return;
 
       setLoadingIds(prev => ({ ...prev, [studentId]: 'ai-generation' }));
-      
+
       try {
         const [parentMsg, studentMsg] = await Promise.all([
           geminiService.generateAbsenceMessage(student, 'parent'),
@@ -36,7 +48,7 @@ const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ students, onNotif
         ]);
 
         setLoadingIds(prev => ({ ...prev, [studentId]: 'transmitting' }));
-        
+
         await smsService.sendSMS({ phone: student.parentPhone, message: parentMsg, recipient: 'parent' });
         await smsService.sendSMS({ phone: student.studentPhone, message: studentMsg, recipient: 'student' });
 
@@ -118,7 +130,7 @@ const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ students, onNotif
               {students.map((student) => {
                 const stage = loadingIds[student.id];
                 const isProcessing = stage && !['sent', 'error'].includes(stage);
-                
+
                 return (
                   <tr key={student.id} className="hover:bg-neutral-900 transition-all group">
                     <td className="px-8 py-6">
@@ -140,29 +152,28 @@ const AttendanceTracker: React.FC<AttendanceTrackerProps> = ({ students, onNotif
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center justify-center gap-4">
-                        <AttendanceButton 
-                          active={attendanceState[student.id] === 'present'} 
-                          color="emerald" 
+                        <AttendanceButton
+                          active={attendanceState[student.id] === 'present'}
+                          color="emerald"
                           onClick={() => markAttendance(student.id, 'present')}
                           icon={<Check size={20} />}
                           disabled={isProcessing}
                         />
-                        <AttendanceButton 
-                          active={attendanceState[student.id] === 'absent'} 
-                          color="rose" 
+                        <AttendanceButton
+                          active={attendanceState[student.id] === 'absent'}
+                          color="rose"
                           onClick={() => markAttendance(student.id, 'absent')}
                           icon={isProcessing ? <Loader2 className="animate-spin" size={20} /> : <X size={20} />}
                           disabled={isProcessing}
                         />
                       </div>
-                      
+
                       {stage && (
                         <div className="mt-3 text-center">
-                           <span className={`text-[10px] font-black uppercase tracking-widest ${
-                             stage === 'sent' ? 'text-emerald-500' : 'text-neutral-400 animate-pulse'
-                           }`}>
-                             {getStageLabel(stage)}
-                           </span>
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${stage === 'sent' ? 'text-emerald-500' : 'text-neutral-400 animate-pulse'
+                            }`}>
+                            {getStageLabel(stage)}
+                          </span>
                         </div>
                       )}
                     </td>
@@ -217,7 +228,7 @@ const AttendanceButton: React.FC<AttendanceButtonProps> = ({ active, color, onCl
   };
 
   return (
-    <button 
+    <button
       disabled={disabled}
       onClick={onClick}
       className={`p-4 rounded-2xl transition-all ${colors[color]} ${disabled ? 'opacity-40 cursor-not-allowed' : 'active:scale-90'}`}

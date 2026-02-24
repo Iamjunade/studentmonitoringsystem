@@ -1,0 +1,50 @@
+Starting DB seed...
+Seeded student: Gulshan Sharma
+Seeded student: G.Rohith
+Seeded student: Kevin Zhang
+Seeded student: Maria Garcia
+Seeded student: Sanjana
+Seeded student: Emma Thompson
+(node:28164) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PrismaClientKnownRequestError: 
+Invalid `prisma.student.create()` invocation in
+C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\seed.ts:21:53
+
+  18 await prisma.student.deleteMany();
+  19 
+  20 for (const student of MOCK_STUDENTS) {
+→ 21     const createdStudent = await prisma.student.create(
+Unique constraint failed on the fields: (`"rollNumber"`)
+    at zr.handleRequestError (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\node_modules\@prisma\client\src\runtime\RequestHandler.ts:237:13)
+    at zr.handleAndLogRequestError (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\node_modules\@prisma\client\src\runtime\RequestHandler.ts:183:12)
+    at zr.request (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\node_modules\@prisma\client\src\runtime\RequestHandler.ts:152:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async a (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:808:24)
+    at async main (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\seed.ts:21:32) {
+  code: 'P2002',
+  meta: {
+    modelName: 'Student',
+    driverAdapterError: DriverAdapterError: UniqueConstraintViolation
+        at PrismaPgAdapter.onError (file:///C:/Users/junaidpasha/Downloads/studentmonitoringsystem-main/studentmonitoringsystem-main/node_modules/@prisma/adapter-pg/dist/index.mjs:651:11)
+        at PrismaPgAdapter.performIO (file:///C:/Users/junaidpasha/Downloads/studentmonitoringsystem-main/studentmonitoringsystem-main/node_modules/@prisma/adapter-pg/dist/index.mjs:646:12)
+        at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+        at async PrismaPgAdapter.queryRaw (file:///C:/Users/junaidpasha/Downloads/studentmonitoringsystem-main/studentmonitoringsystem-main/node_modules/@prisma/adapter-pg/dist/index.mjs:566:30)
+        at async e.interpretNode (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\node_modules\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:182:26)
+        at async e.interpretNode (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\node_modules\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:209:41)
+        at async e.interpretNode (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\node_modules\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:268:41)
+        at async e.run (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\node_modules\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:93:23)
+        at async e.execute (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\node_modules\@prisma\client\src\runtime\core\engines\client\LocalExecutor.ts:81:12)
+        at async qt.request (C:\Users\junaidpasha\Downloads\studentmonitoringsystem-main\studentmonitoringsystem-main\node_modules\@prisma\client\src\runtime\core\engines\client\ClientEngine.ts:492:22) {
+      cause: [Object]
+    }
+  },
+  clientVersion: '7.4.1'
+}

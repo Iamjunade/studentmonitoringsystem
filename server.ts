@@ -12,6 +12,46 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Initialize Prisma Client for local Express server
+  const { PrismaClient } = await import('@prisma/client');
+  const { Pool } = await import('pg');
+  const { PrismaPg } = await import('@prisma/adapter-pg');
+
+  const connectionString = process.env.DATABASE_URL;
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
+  const prisma = new PrismaClient({ adapter });
+
+  // API Route to fetch all students
+  app.get("/api/students", async (req, res) => {
+    try {
+      const students = await prisma.student.findMany({
+        include: { academicDetails: true },
+      });
+      res.status(200).json(students);
+    } catch (error) {
+      console.error("[GET /api/students] Error:", error);
+      res.status(500).json({ error: "Internal server error fetching students" });
+    }
+  });
+
+  // API Route to register attendance
+  app.post("/api/attendance", async (req, res) => {
+    const { studentId, status } = req.body;
+    if (!studentId || !status) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    try {
+      const attendanceRecord = await prisma.attendance.create({
+        data: { studentId, status },
+      });
+      res.status(200).json({ success: true, record: attendanceRecord });
+    } catch (error) {
+      console.error("[POST /api/attendance] Error:", error);
+      res.status(500).json({ error: "Internal server error saving attendance" });
+    }
+  });
   // SMS Gateway Configuration
   const SMS_GATEWAY_KEY = process.env.SMS_GATEWAY_KEY || "uk_gHRx8BKeVjiEYRA1EUh3_bQXZbre-5De8F1XBu1pzsbVxmWX9xh7MFzUUymBIDVM";
   const ANDROID_SMS_GATEWAY_URL = "https://api.sms-gateway.app/v1/message/send";

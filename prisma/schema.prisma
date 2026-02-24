@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Student {
+  id                   String           @id @default(uuid())
+  name                 String
+  rollNumber           String           @unique
+  email                String           @unique
+  parentName           String
+  parentPhone          String
+  studentPhone         String
+  grade                String
+  section              String
+  avatar               String?
+  attendancePercentage Float            @default(0)
+  gpa                  Float            @default(0)
+  
+  attendanceHistory    Attendance[]
+  academicDetails      AcademicDetail[]
+
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  studentId String
+  date      DateTime @default(now())
+  status    String   // "present", "absent", "late"
+  
+  student   Student  @relation(fields: [studentId], references: [id])
+}
+
+model AcademicDetail {
+  id        String   @id @default(uuid())
+  studentId String
+  subject   String
+  grade     String
+  score     Float
+  
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}

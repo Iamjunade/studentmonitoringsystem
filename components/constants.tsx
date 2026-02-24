@@ -121,7 +121,7 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '7',
     name: 'Lucas Brown',
-    rollNumber: '24R01A6627',
+    rollNumber: '24R01A6627B',
     email: 'lucas.b@btech.edu',
     parentName: 'Nancy Brown',
     parentPhone: '+1-202-555-0107',

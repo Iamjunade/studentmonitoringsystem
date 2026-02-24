@@ -1,12 +1,12 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { 
-  Users, 
-  LayoutDashboard, 
-  CalendarCheck, 
-  Bell, 
-  Search, 
-  LogOut, 
+import {
+  Users,
+  LayoutDashboard,
+  CalendarCheck,
+  Bell,
+  Search,
+  LogOut,
   ChevronRight,
   History,
   X,
@@ -25,14 +25,32 @@ import SMSNotificationToast from './components/SMSNotificationToast';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('dashboard');
-  const [students] = useState<Student[]>(MOCK_STUDENTS);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<NotificationLog[]>([]);
   const [activeToast, setActiveToast] = useState<NotificationLog | null>(null);
-  const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent' | 'late' | null>>(
-    MOCK_STUDENTS.reduce((acc, s) => ({ ...acc, [s.id]: null }), {})
-  );
+  const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent' | 'late' | null>>({});
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const res = await fetch('/api/students');
+        if (res.ok) {
+          const data = await res.json();
+          setStudents(data);
+          // Initialize attendance record keys based on fetched students
+          setAttendance(data.reduce((acc: any, s: Student) => ({ ...acc, [s.id]: null }), {}));
+        }
+      } catch (error) {
+        console.error("Failed to fetch students from DB", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchStudents();
+  }, []);
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isNotifDrawerOpen, setNotifDrawerOpen] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -42,8 +60,8 @@ const App: React.FC = () => {
   const filteredStudents = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return students;
-    return students.filter(s => 
-      s.name.toLowerCase().includes(query) || 
+    return students.filter(s =>
+      s.name.toLowerCase().includes(query) ||
       s.rollNumber.toLowerCase().includes(query)
     );
   }, [students, searchQuery]);
@@ -82,9 +100,9 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden relative font-['Inter']">
       {activeToast && (
-        <SMSNotificationToast 
-          notification={activeToast} 
-          onClose={() => setActiveToast(null)} 
+        <SMSNotificationToast
+          notification={activeToast}
+          onClose={() => setActiveToast(null)}
         />
       )}
 
@@ -94,45 +112,45 @@ const App: React.FC = () => {
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-black font-black text-xl shadow-lg">
             SM
           </div>
-          {isSidebarOpen && <span className="font-black text-lg tracking-tighter leading-none">STUDENT MONITORING<br/><span className="text-neutral-500 text-[10px] tracking-[0.2em] font-bold">SYSTEM</span></span>}
+          {isSidebarOpen && <span className="font-black text-lg tracking-tighter leading-none">STUDENT MONITORING<br /><span className="text-neutral-500 text-[10px] tracking-[0.2em] font-bold">SYSTEM</span></span>}
         </div>
 
         <nav className="flex-1 px-4 py-8 space-y-2">
-          <SidebarItem 
-            icon={<LayoutDashboard size={20} />} 
-            label="Dashboard" 
-            active={view === 'dashboard'} 
+          <SidebarItem
+            icon={<LayoutDashboard size={20} />}
+            label="Dashboard"
+            active={view === 'dashboard'}
             onClick={() => setView('dashboard')}
             collapsed={!isSidebarOpen}
           />
-          <SidebarItem 
-            icon={<CalendarCheck size={20} />} 
-            label="Attendance" 
-            active={view === 'attendance'} 
+          <SidebarItem
+            icon={<CalendarCheck size={20} />}
+            label="Attendance"
+            active={view === 'attendance'}
             onClick={() => setView('attendance')}
             collapsed={!isSidebarOpen}
           />
-          <SidebarItem 
-            icon={<Users size={20} />} 
-            label="Students" 
-            active={view === 'students'} 
+          <SidebarItem
+            icon={<Users size={20} />}
+            label="Students"
+            active={view === 'students'}
             onClick={() => setView('students')}
             collapsed={!isSidebarOpen}
           />
         </nav>
 
         <div className="p-4 border-t border-neutral-900">
-           <button 
-             onClick={() => setSidebarOpen(!isSidebarOpen)}
-             className="w-full flex items-center gap-3 p-3 hover:bg-neutral-900 rounded-lg text-neutral-500 transition-colors"
-           >
-             <ChevronRight className={`transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`} size={20} />
-             {isSidebarOpen && <span className="font-medium text-sm">Minimize</span>}
-           </button>
-           <button className="w-full flex items-center gap-3 p-3 text-rose-500 hover:bg-rose-500/10 rounded-lg mt-2 transition-colors">
-             <LogOut size={20} />
-             {isSidebarOpen && <span className="font-medium text-sm">Logout</span>}
-           </button>
+          <button
+            onClick={() => setSidebarOpen(!isSidebarOpen)}
+            className="w-full flex items-center gap-3 p-3 hover:bg-neutral-900 rounded-lg text-neutral-500 transition-colors"
+          >
+            <ChevronRight className={`transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`} size={20} />
+            {isSidebarOpen && <span className="font-medium text-sm">Minimize</span>}
+          </button>
+          <button className="w-full flex items-center gap-3 p-3 text-rose-500 hover:bg-rose-500/10 rounded-lg mt-2 transition-colors">
+            <LogOut size={20} />
+            {isSidebarOpen && <span className="font-medium text-sm">Logout</span>}
+          </button>
         </div>
       </aside>
 
@@ -144,9 +162,9 @@ const App: React.FC = () => {
           <div className="flex items-center gap-6">
             <div className="relative group hidden sm:block" ref={searchRef}>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600 group-focus-within:text-white transition-colors" size={16} />
-              <input 
-                type="text" 
-                placeholder="Search name or roll no..." 
+              <input
+                type="text"
+                placeholder="Search name or roll no..."
                 value={searchQuery}
                 onFocus={() => setShowSearchResults(true)}
                 onChange={(e) => {
@@ -157,7 +175,7 @@ const App: React.FC = () => {
                 className="pl-10 pr-10 py-2 bg-neutral-900 border border-neutral-800 rounded-full text-xs text-white focus:outline-none focus:ring-1 focus:ring-white/20 w-64 transition-all"
               />
               {searchQuery && (
-                <button 
+                <button
                   onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-white"
                 >
@@ -199,7 +217,7 @@ const App: React.FC = () => {
               )}
             </div>
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setNotifDrawerOpen(true)}
                 className="p-2 text-neutral-400 hover:bg-neutral-900 rounded-full relative transition-colors"
               >
@@ -225,18 +243,18 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-8 bg-black">
           {view === 'dashboard' && <Dashboard students={filteredStudents} onSelectStudent={handleSelectStudent} notifications={notifications} isSearching={!!searchQuery} />}
           {view === 'attendance' && (
-            <AttendanceTracker 
-              students={filteredStudents} 
-              onNotify={addNotification} 
-              attendanceState={attendance} 
+            <AttendanceTracker
+              students={filteredStudents}
+              onNotify={addNotification}
+              attendanceState={attendance}
               setAttendanceState={setAttendance}
             />
           )}
           {view === 'students' && <StudentList students={filteredStudents} onSelectStudent={handleSelectStudent} />}
           {view === 'profile' && activeStudent && (
-            <StudentProfile 
-              student={activeStudent} 
-              onBack={() => setView('students')} 
+            <StudentProfile
+              student={activeStudent}
+              onBack={() => setView('students')}
             />
           )}
           {filteredStudents.length === 0 && searchQuery && (
@@ -250,8 +268,8 @@ const App: React.FC = () => {
         {/* Notification Drawer */}
         {isNotifDrawerOpen && (
           <>
-            <div 
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 transition-all duration-300" 
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 transition-all duration-300"
               onClick={() => setNotifDrawerOpen(false)}
             ></div>
             <div className="absolute right-0 top-0 bottom-0 w-96 bg-neutral-950 shadow-2xl z-50 animate-in slide-in-from-right duration-500 border-l border-neutral-900 flex flex-col">
@@ -264,7 +282,7 @@ const App: React.FC = () => {
                   <X size={20} />
                 </button>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black">
                 {notifications.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-40">
@@ -276,9 +294,8 @@ const App: React.FC = () => {
                     <div key={notif.id} className="p-5 rounded-[2rem] border border-neutral-800 bg-neutral-900 hover:border-neutral-700 transition-all group">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest border ${
-                            notif.recipient === 'parent' ? 'bg-white/10 text-white border-white/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          }`}>
+                          <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest border ${notif.recipient === 'parent' ? 'bg-white/10 text-white border-white/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            }`}>
                             {notif.recipient}
                           </span>
                           <span className="text-[10px] font-bold text-neutral-500">{new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -288,7 +305,7 @@ const App: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mb-4">
-                         <span className="text-xs font-mono font-bold text-neutral-400">{notif.phone}</span>
+                        <span className="text-xs font-mono font-bold text-neutral-400">{notif.phone}</span>
                       </div>
                       <div className="bg-black p-4 rounded-2xl border border-neutral-800">
                         <p className="text-xs text-neutral-400 leading-relaxed italic">"{notif.message}"</p>
@@ -314,13 +331,12 @@ interface SidebarItemProps {
 }
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, active, onClick, collapsed }) => (
-  <button 
+  <button
     onClick={onClick}
-    className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${
-      active 
-      ? 'bg-white text-black shadow-xl' 
-      : 'text-neutral-500 hover:bg-neutral-900 hover:text-white'
-    }`}
+    className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${active
+        ? 'bg-white text-black shadow-xl'
+        : 'text-neutral-500 hover:bg-neutral-900 hover:text-white'
+      }`}
   >
     <div className={`${active ? 'text-black' : 'text-neutral-500'}`}>{icon}</div>
     {!collapsed && <span className="font-bold text-sm tracking-tight">{label}</span>}
