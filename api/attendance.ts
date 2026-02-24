@@ -1,7 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import getPrismaClient from '../lib/prisma';
-
-const prisma = getPrismaClient();
+import { getSQL } from '../lib/prisma';
 
 export default async function handler(
     req: VercelRequest,
@@ -18,16 +16,17 @@ export default async function handler(
     }
 
     try {
-        const attendanceRecord = await prisma.attendance.create({
-            data: {
-                studentId,
-                status,
-            },
-        });
+        const sql = getSQL();
 
-        res.status(200).json({ success: true, record: attendanceRecord });
+        const result = await sql`
+      INSERT INTO "Attendance" (id, "studentId", status, date)
+      VALUES (gen_random_uuid(), ${studentId}, ${status}, NOW())
+      RETURNING *
+    `;
+
+        res.status(200).json({ success: true, record: result[0] });
     } catch (error) {
         console.error("[POST /api/attendance] Error:", error);
-        res.status(500).json({ error: "Internal server error saving attendance", details: String(error) });
+        res.status(500).json({ error: "Internal server error", details: String(error) });
     }
 }

@@ -1,7 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import getPrismaClient from '../lib/prisma';
-
-const prisma = getPrismaClient();
+import { getSQL } from '../lib/prisma';
 
 export default async function handler(
     req: VercelRequest,
@@ -18,31 +16,22 @@ export default async function handler(
     }
 
     try {
-        const newStudent = await prisma.student.create({
-            data: {
-                name,
-                rollNumber,
-                email,
-                parentName,
-                parentPhone,
-                studentPhone,
-                grade,
-                section,
-                avatar: `https://i.pravatar.cc/150?u=${rollNumber}`,
-                attendancePercentage: 0,
-                gpa: 0,
-            },
-            include: {
-                academicDetails: true,
-            },
-        });
+        const sql = getSQL();
+        const avatar = `https://i.pravatar.cc/150?u=${rollNumber}`;
 
-        res.status(201).json({ success: true, student: newStudent });
+        const result = await sql`
+      INSERT INTO "Student" (id, name, "rollNumber", email, "parentName", "parentPhone", "studentPhone", grade, section, avatar, "attendancePercentage", gpa, "createdAt", "updatedAt")
+      VALUES (gen_random_uuid(), ${name}, ${rollNumber}, ${email}, ${parentName}, ${parentPhone}, ${studentPhone}, ${grade}, ${section}, ${avatar}, 0, 0, NOW(), NOW())
+      RETURNING *
+    `;
+
+        const student = { ...result[0], academicDetails: [], attendanceHistory: [] };
+        res.status(201).json({ success: true, student });
     } catch (error: any) {
         console.error("[POST /api/add-student] Error:", error);
-        if (error?.code === 'P2002') {
+        if (error?.message?.includes('unique') || error?.message?.includes('duplicate')) {
             return res.status(409).json({ error: "A student with that roll number or email already exists." });
         }
-        res.status(500).json({ error: "Internal server error creating student", details: String(error) });
+        res.status(500).json({ error: "Internal server error", details: String(error) });
     }
 }

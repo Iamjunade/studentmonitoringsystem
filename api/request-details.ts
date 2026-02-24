@@ -1,7 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import getPrismaClient from '../lib/prisma';
-
-const prisma = getPrismaClient();
+import { getSQL } from '../lib/prisma';
 
 export default async function handler(
     req: VercelRequest,
@@ -18,9 +16,10 @@ export default async function handler(
     }
 
     try {
-        const student = await prisma.student.findUnique({
-            where: { id: studentId }
-        });
+        const sql = getSQL();
+
+        const students = await sql`SELECT * FROM "Student" WHERE id = ${studentId}`;
+        const student = students[0];
 
         if (!student) {
             return res.status(404).json({ error: "Student not found" });
@@ -56,6 +55,6 @@ export default async function handler(
         res.status(200).json({ success: true, result });
     } catch (error) {
         console.error("[POST /api/request-details] Error:", error);
-        res.status(500).json({ error: "Internal server error sending request", details: String(error) });
+        res.status(500).json({ error: "Internal server error", details: String(error) });
     }
 }
