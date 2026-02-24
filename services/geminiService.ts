@@ -79,5 +79,34 @@ export const geminiService = {
     } catch (error) {
       return "Unable to generate insights at this time.";
     }
+  },
+
+  /**
+   * Generates an SMS requesting a student to submit their academic details.
+   */
+  generateAcademicDetailsRequest: async (student: Student): Promise<string> => {
+    try {
+      const prompt = `Generate a short, formal SMS to a student requesting them to submit their updated academic details (subjects, grades, scores) to the college administration.
+        Student Name: ${student.name}
+        Roll Number: ${student.rollNumber}
+        Constraint: Max 160 characters. Professional but friendly tone. Include the student's name and roll number.`;
+
+      const response = await getAI().models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          temperature: 0.5,
+        }
+      });
+
+      const generatedText = response.text?.trim();
+      if (!generatedText) {
+        return `Dear ${student.name} (${student.rollNumber}), please submit your updated academic details (subjects, grades, scores) to the college office at the earliest. Thank you.`;
+      }
+      return generatedText;
+    } catch (error) {
+      console.error("Gemini Error (Academic Details Request):", error);
+      return `Dear ${student.name} (${student.rollNumber}), please submit your updated academic details to the college office at the earliest. Thank you.`;
+    }
   }
 };

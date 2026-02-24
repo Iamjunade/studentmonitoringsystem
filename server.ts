@@ -52,6 +52,66 @@ async function startServer() {
       res.status(500).json({ error: "Internal server error saving attendance" });
     }
   });
+
+  // API Route to update student details (Mentor Access)
+  app.put("/api/update-student", async (req, res) => {
+    const { id, name, parentPhone, studentPhone } = req.body;
+    if (!id) {
+      return res.status(400).json({ error: "Missing required student ID" });
+    }
+    try {
+      const updatedStudent = await prisma.student.update({
+        where: { id },
+        data: {
+          ...(name && { name }),
+          ...(parentPhone && { parentPhone }),
+          ...(studentPhone && { studentPhone }),
+        },
+      });
+      res.status(200).json({ success: true, student: updatedStudent });
+    } catch (error) {
+      console.error("[PUT /api/update-student] Error:", error);
+      res.status(500).json({ error: "Internal server error updating student" });
+    }
+  });
+
+  // API Route to send SMS requesting academic details (Mentor Access)
+  app.post("/api/request-details", async (req, res) => {
+    const { studentId, message } = req.body;
+    if (!studentId || !message) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    try {
+      const student = await prisma.student.findUnique({ where: { id: studentId } });
+      if (!student) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      const SMS_GATEWAY_KEY = process.env.SMS_GATEWAY_KEY;
+      const TEXTBEE_DEVICE_ID = process.env.TEXTBEE_DEVICE_ID;
+      if (!SMS_GATEWAY_KEY || !TEXTBEE_DEVICE_ID) {
+        return res.status(500).json({ error: "SMS Gateway is not fully configured" });
+      }
+
+      const TEXTBEE_API_URL = `https://api.textbee.dev/api/v1/gateway/devices/${TEXTBEE_DEVICE_ID}/send-sms`;
+      const response = await fetch(TEXTBEE_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': SMS_GATEWAY_KEY },
+        body: JSON.stringify({ recipients: [student.studentPhone], message }),
+      });
+
+      if (response.ok) {
+        res.status(200).json({ success: true });
+      } else {
+        const errorText = await response.text();
+        res.status(502).json({ error: "Upstream SMS Provider Failed", details: errorText });
+      }
+    } catch (error) {
+      console.error("[POST /api/request-details] Error:", error);
+      res.status(500).json({ error: "Internal server error sending request" });
+    }
+  });
+
   // SMS Gateway Configuration
   const SMS_GATEWAY_KEY = process.env.SMS_GATEWAY_KEY || "uk_gHRx8BKeVjiEYRA1EUh3_bQXZbre-5De8F1XBu1pzsbVxmWX9xh7MFzUUymBIDVM";
   const ANDROID_SMS_GATEWAY_URL = "https://api.sms-gateway.app/v1/message/send";

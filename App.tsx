@@ -255,6 +255,9 @@ const App: React.FC = () => {
             <StudentProfile
               student={activeStudent}
               onBack={() => setView('students')}
+              onStudentUpdated={(updated) => {
+                setStudents(prev => prev.map(s => s.id === updated.id ? { ...s, ...updated } : s));
+              }}
             />
           )}
           {filteredStudents.length === 0 && searchQuery && (
@@ -334,8 +337,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, active, onClick,
   <button
     onClick={onClick}
     className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${active
-        ? 'bg-white text-black shadow-xl'
-        : 'text-neutral-500 hover:bg-neutral-900 hover:text-white'
+      ? 'bg-white text-black shadow-xl'
+      : 'text-neutral-500 hover:bg-neutral-900 hover:text-white'
       }`}
   >
     <div className={`${active ? 'text-black' : 'text-neutral-500'}`}>{icon}</div>
